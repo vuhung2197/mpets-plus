@@ -1,0 +1,270 @@
+:root {
+  --bg: #1e1e24;
+  --panel: #2a2a32;
+  --text: #f0f0f3;
+  --muted: #9a9aa6;
+  --accent: #f4a261;
+  --accent-blue: #50a0dc;
+  --border: #3a3a44;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+header {
+  padding: 12px 14px 0;
+  -webkit-app-region: drag;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  -webkit-app-region: no-drag;
+}
+
+.tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 8px 0;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.tab.active {
+  color: var(--text);
+  background: var(--panel);
+}
+
+.view {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  background: var(--panel);
+  padding: 18px 16px;
+  overflow: hidden;
+}
+
+[data-view="settings"] {
+  overflow-y: auto;
+}
+
+.view.active {
+  display: flex;
+}
+
+/* Timer */
+[data-view="timer"] {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.phase {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.clock {
+  font-size: 64px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sessions {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: #34343e;
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3e3e4a;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1e1e24;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  filter: brightness(1.05);
+}
+
+/* Chat */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.bubble {
+  max-width: 85%;
+  padding: 8px 11px;
+  border-radius: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.bubble.pet {
+  align-self: flex-start;
+  background: #34343e;
+}
+
+.bubble.error {
+  align-self: flex-start;
+  background: #5a2a2a;
+  color: #ffd0d0;
+  font-size: 13px;
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.composer input {
+  flex: 1;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+  font-family: inherit;
+  font-size: 14px;
+  background: #1e1e24;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 11px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+select {
+  cursor: pointer;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Settings */
+[data-view="settings"] {
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+.duration-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.duration-label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.duration-grid input[type="number"] {
+  width: 64px;
+  text-align: center;
+  padding: 7px 8px;
+}
+
+.quit-bar {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.quit-bar button {
+  width: 100%;
+  font-size: 12px;
+  color: #e06c75;
+  background: transparent;
+  border-color: transparent;
+}
+
+.quit-bar button:hover {
+  background: rgba(224, 108, 117, 0.12);
+  border-color: rgba(224, 108, 117, 0.3);
+}

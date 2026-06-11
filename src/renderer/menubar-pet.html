@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        width: 200px;
+        height: 40px;
+        background: transparent;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Soft pill spanning the full walk zone — stays fixed, never moves */
+      #bg {
+        position: absolute;
+        bottom: 2px;
+        left: 4px;
+        right: 4px;
+        height: 34px;
+        background: rgba(0, 0, 0, 0.40);
+        border-radius: 17px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: none;
+        pointer-events: none;
+      }
+      #bg.visible { display: block; }
+
+      /* Timer text — centred inside the pill, behind the pet */
+      #timer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: -apple-system-monospaced-numbers, "SF Mono", ui-monospace, monospace;
+        font-size: 12px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.95);
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 1;
+        display: none;
+      }
+      #timer.visible { display: block; }
+
+      /* Pet sprite — positioned via JS (left: Xpx), always on top of timer */
+      #pet {
+        position: absolute;
+        bottom: 4px;
+        left: 0;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        transform-origin: center bottom;
+        -webkit-user-select: none;
+        z-index: 2;
+      }
+
+      #anim {
+        width: 32px;
+        height: 32px;
+        transform-origin: center bottom;
+      }
+
+      #img {
+        width: 32px;
+        height: 32px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        display: block;
+        pointer-events: none;
+      }
+
+      @keyframes bob {
+        0%, 100% { transform: translateY(0px) scaleY(1); }
+        30%       { transform: translateY(-4px) scaleY(1.08); }
+        60%       { transform: translateY(0px) scaleY(0.94); }
+      }
+      @keyframes hop {
+        0%, 100% { transform: translateY(0px) scaleY(1); }
+        25%      { transform: translateY(-10px) scaleY(1.15); }
+        55%      { transform: translateY(0px) scaleY(0.85); }
+        70%      { transform: translateY(-3px) scaleY(1.05); }
+      }
+      @keyframes breathe {
+        0%, 100% { transform: scaleY(1) translateY(0); }
+        50%      { transform: scaleY(0.88) translateY(2px); }
+      }
+
+      #anim.walking   { animation: bob 0.34s ease-in-out infinite; }
+      #anim.celebrate { animation: hop 0.52s ease-in-out infinite; }
+      #anim.sleepy    { animation: breathe 2.4s ease-in-out infinite; }
+    </style>
+  </head>
+  <body>
+    <div id="bg"></div>
+    <div id="timer"></div>
+    <div id="pet">
+      <div id="anim">
+        <img id="img" />
+      </div>
+    </div>
+    <script src="./menubar-pet.js"></script>
+  </body>
+</html>

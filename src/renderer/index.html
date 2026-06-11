@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';" />
+    <title>Mac Pet Plus</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <span class="title">🐾 Pixel</span>
+      <nav class="tabs">
+        <button class="tab active" data-tab="timer">Hẹn giờ</button>
+        <button class="tab" data-tab="chat">Chat</button>
+        <button class="tab" data-tab="settings">Cài đặt</button>
+      </nav>
+    </header>
+
+    <!-- Timer -->
+    <section class="view active" data-view="timer">
+      <div class="phase" id="phase">Tập trung</div>
+      <div class="clock" id="clock">25:00</div>
+      <div class="sessions" id="sessions">0 phiên hoàn thành</div>
+      <div class="controls">
+        <button id="startPause" class="primary">Bắt đầu</button>
+        <button id="reset">Đặt lại</button>
+        <button id="skip">Bỏ qua</button>
+      </div>
+    </section>
+
+    <!-- Chat -->
+    <section class="view" data-view="chat">
+      <div class="messages" id="messages"></div>
+      <form class="composer" id="composer">
+        <input id="chatInput" type="text" placeholder="Nhắn gì đó với Pixel… (hoặc ra lệnh hẹn giờ)" autocomplete="off" />
+        <button type="submit" class="primary" id="sendBtn">Gửi</button>
+      </form>
+      <button id="resetChat" style="margin-top:6px;width:100%;font-size:12px;color:var(--muted);background:transparent;border-color:var(--border)">Xóa lịch sử chat</button>
+    </section>
+
+    <!-- Settings -->
+    <section class="view" data-view="settings">
+      <label class="field-label">Thời gian (phút)</label>
+      <div class="duration-grid">
+        <span class="duration-label">Tập trung</span>
+        <input id="durationFocus" type="number" min="1" max="120" value="25" />
+        <span class="duration-label">Nghỉ ngắn</span>
+        <input id="durationShort" type="number" min="1" max="60" value="5" />
+        <span class="duration-label">Nghỉ dài</span>
+        <input id="durationLong" type="number" min="1" max="120" value="15" />
+      </div>
+      <button id="saveDurations" class="primary">Lưu thời gian</button>
+
+      <label class="checkbox">
+        <input type="checkbox" id="petBackground" />
+        <span>Hiện nền sau pet (pill mờ trong notch)</span>
+      </label>
+
+      <label class="field-label" for="skin">Giao diện thú cưng</label>
+      <select id="skin">
+        <option value="cat">🐱 Mèo</option>
+        <option value="blob">🟠 Blob</option>
+        <option value="ghost">👻 Ma</option>
+      </select>
+
+      <label class="field-label" for="apiKey">OpenAI API key</label>
+      <input id="apiKey" type="password" placeholder="sk-…" autocomplete="off" />
+      <button id="saveKey" class="primary">Lưu key</button>
+      <p class="hint" id="keyStatus"></p>
+      <p class="hint">Key được lưu cục bộ và chỉ dùng để chat với Pixel.</p>
+    </section>
+
+    <script src="./renderer.js"></script>
+    <footer class="quit-bar">
+      <button id="quitApp">Thoát ứng dụng</button>
+    </footer>
+  </body>
+</html>
