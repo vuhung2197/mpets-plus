@@ -1,63 +1,66 @@
 # Mac Pet Plus
 
-A pixel pet that lives in your macOS menu bar — like Mac Pet, with more to it. **Phase 1** ships three features:
+Thú cưng pixel sống trong thanh menu macOS — giống Mac Pet nhưng có nhiều tính năng hơn.
 
-- 🐾 **Pixel pet on the menu bar** — an animated pixel-art tray icon that changes mood and shows the live timer.
-- 🍅 **Pomodoro timer** — 25-min focus / 5-min short break / 15-min long break, with a long break every 4 focus sessions. Notifications on each phase change.
-- 💬 **Chat with your pet** — talk to Pixel, powered by the OpenAI API (`gpt-4o-mini`, streaming).
+- 🐾 **Thú cưng di chuyển trên thanh menu** — nhân vật pixel-art hoạt hình di chuyển qua lại trong vùng 200px ở trung tâm màn hình (ngay dưới notch nếu có), hiển thị thời gian đếm ngược Pomodoro ngay trong strip.
+- 🍅 **Hẹn giờ Pomodoro** — 25 phút tập trung / 5 phút nghỉ ngắn / 15 phút nghỉ dài, nghỉ dài sau mỗi 4 phiên tập trung. Thông báo khi chuyển giai đoạn.
+- 💬 **Chat với thú cưng** — nói chuyện với Pixel, hỗ trợ bởi OpenAI API (`gpt-4o-mini`, streaming). Có thể ra lệnh hẹn giờ bằng ngôn ngữ tự nhiên.
+- 🎭 **Cảm xúc** — thú cưng có 5 trạng thái: nghỉ ngơi, tập trung (khi đang đếm giờ làm việc), thư giãn (khi nghỉ), **ăn mừng** (sau khi hoàn thành một phiên tập trung, ~5 giây), và **buồn ngủ** (ngủ gật sau 5 phút không có hẹn giờ; thức dậy khi mở popup).
+- 🎨 **Giao diện** — chọn giữa **Mèo**, **Blob**, và **Ma** trong tab Cài đặt.
+- 🖥️ **Đa màn hình** — tự động tạo strip thú cưng trên mỗi màn hình đang kết nối.
 
-**Phase 2** adds life to the pet:
+## Công nghệ
 
-- 🎭 **Reactions** — the pet has five moods: idle, focused (during work), resting (during breaks), **celebrating** (after a focus session completes, ~5s), and **sleepy** (dozes off after 5 min with no timer running; wakes when you open the popover).
-- 🎨 **Skins** — choose between **Cat**, **Blob**, and **Ghost** in the Settings tab. The choice persists.
+Electron + TypeScript. Không dùng bundler — `tsc` biên dịch ra `dist/`, một script nhỏ copy HTML/CSS của renderer.
 
-## Stack
-
-Electron + TypeScript. No bundler — `tsc` compiles to `dist/` and a small script copies the renderer HTML/CSS.
-
-## Project structure
+## Cấu trúc dự án
 
 ```
 src/
   main/          Electron main process
-    main.ts        app entry — tray, popover window, IPC wiring
-    tray.ts        animated pixel-pet tray icon + timer title
-    pomodoro.ts    Pomodoro timer state machine
-    chat.ts        streaming chat via the openai SDK
-    settings.ts    API key persistence (userData/config.json)
+    main.ts        entry point — cửa sổ popup, kết nối IPC
+    menubar-pet.ts thú cưng di chuyển trên thanh menu (một window per màn hình)
+    tray.ts        định nghĩa kiểu PetState, Skin
+    pomodoro.ts    state machine hẹn giờ Pomodoro
+    chat.ts        streaming chat qua OpenAI SDK + function calling
+    settings.ts    lưu cấu hình (userData/config.json)
   preload/
-    preload.ts     contextBridge — the typed window.petAPI surface
+    preload.ts     contextBridge — API window.petAPI cho renderer popup
+    pet-preload.ts contextBridge — API window.desktopPet cho strip thú cưng
   renderer/
-    index.html     popover UI (Timer / Chat / Settings tabs)
+    index.html     giao diện popup (tab Hẹn giờ / Chat / Cài đặt)
+    menubar-pet.html  cửa sổ strip thú cưng (200px, trong suốt)
     styles.css
     renderer.ts
+    menubar-pet.ts
 scripts/
-  generate-assets.js  generates pixel-pet PNG frames per skin/state (self-contained encoder)
-  copy-static.js      copies renderer HTML/CSS into dist/
-assets/pet/<skin>/    generated tray icon frames (<state>-<frame>.png)
+  generate-assets.js  tạo các frame PNG pixel-pet theo skin/trạng thái
+  copy-static.js      copy HTML/CSS vào dist/
+assets/pet/<skin>/    frame ảnh thú cưng (<trạng-thái>-<frame>.png)
 ```
 
-## Setup
+## Cài đặt
 
 ```bash
 npm install
-npm run generate-assets   # creates assets/pet/*.png (run once)
-npm start                 # builds and launches the app
+npm run generate-assets   # tạo assets/pet/*.png (chạy một lần)
+npm start                 # biên dịch và khởi động ứng dụng
 ```
 
-The pet appears in your menu bar (the app has no Dock icon). **Left-click** the pet to open the popover; **right-click** for Quit.
+Thú cưng xuất hiện trên thanh menu (ứng dụng không có icon Dock). **Click** vào thú cưng để mở popup. Dùng nút **Thoát ứng dụng** trong popup để đóng chương trình.
 
-## API key
+## API Key
 
-Chat needs an OpenAI API key. Either:
+Tính năng chat cần OpenAI API key. Có hai cách thiết lập:
 
-- Open the popover → **Settings** tab → paste your key → Save, or
-- Set `OPENAI_API_KEY` in your environment (see `.env.example`).
+- Mở popup → tab **Cài đặt** → dán key vào → Lưu key, hoặc
+- Đặt `OPENAI_API_KEY` trong biến môi trường (xem `.env.example`).
 
-The key is stored locally in the app's `userData/config.json`.
+Key được lưu cục bộ trong `userData/config.json` của ứng dụng.
 
-## Roadmap
+## Lộ trình phát triển
 
-- Phase 1 ✅ — menu-bar pet, Pomodoro, chat.
-- Phase 2 ✅ — pet reactions (celebrate / sleepy) and selectable skins.
-- Future ideas: Pomodoro stats & history, custom timer durations, sound alerts, draggable desktop pet, more skins.
+- Giai đoạn 1 ✅ — thú cưng trên menu bar, Pomodoro, chat.
+- Giai đoạn 2 ✅ — cảm xúc thú cưng (ăn mừng / buồn ngủ), chọn giao diện.
+- Giai đoạn 3 ✅ — thời gian Pomodoro tuỳ chỉnh, ra lệnh hẹn giờ qua chat, đa màn hình, background toggle, hiển thị thời gian trong strip.
+- Ý tưởng tương lai: thống kê & lịch sử Pomodoro, cảnh báo âm thanh, thêm giao diện thú cưng.
