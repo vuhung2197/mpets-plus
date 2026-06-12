@@ -1,6 +1,6 @@
 {
   "name": "mac-pet-plus",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A pixel pet that lives in your macOS menu bar — with a Pomodoro timer and an Anthropic-powered chat.",
   "author": "",
   "license": "MIT",
