@@ -50,6 +50,7 @@
     },
     "win": {
       "artifactName": "MPetsPlusSetup-${version}.${ext}",
+      "requestedExecutionLevel": "asInvoker",
       "target": [
         {
           "target": "nsis",
@@ -58,6 +59,16 @@
           ]
         }
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerLanguages": ["English"],
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "uninstallDisplayName": "MPets Plus"
     },
     "publish": {
       "provider": "github",
