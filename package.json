@@ -1,6 +1,6 @@
 {
   "name": "mac-pet-plus",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A pixel pet that lives in your macOS menu bar — with a Pomodoro timer and an Anthropic-powered chat.",
   "author": "",
   "license": "MIT",
@@ -11,14 +11,69 @@
     "build": "tsc -p tsconfig.json && npm run copy-static",
     "prestart": "npm run build",
     "start": "electron .",
-    "clean": "rm -rf dist"
+    "pack": "npm run build && electron-builder --mac --dir",
+    "dist": "npm run build && electron-builder --mac --publish never",
+    "dist:win": "npm run build && electron-builder --win --publish never",
+    "dist:publish": "npm run build && electron-builder --mac --win --publish always",
+    "relaunch": "npm run pack && pkill -f 'MPets Plus' ; open 'release/mac-arm64/MPets Plus.app'",
+    "release": "bash scripts/release.sh",
+    "clean": "rm -rf dist release"
+  },
+  "build": {
+    "appId": "com.vuhung2197.mpets-plus",
+    "productName": "MPets Plus",
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "vuhung2197",
+      "repo": "mac-pet-plus"
+    },
+    "directories": {
+      "output": "release"
+    }
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "openai": "^4.104.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "electron": "^33.2.0",
+    "electron-builder": "^26.15.2",
     "typescript": "^5.7.0"
   }
 }
