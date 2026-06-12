@@ -18,6 +18,11 @@ command -v gh   >/dev/null 2>&1 || error "Cần cài GitHub CLI (brew install gh
 command -v node >/dev/null 2>&1 || error "Cần cài Node.js"
 command -v git  >/dev/null 2>&1 || error "Cần cài git"
 
+# ── Phải đứng ở branch dev ───────────────────────────────────────────────────
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+[ "$CURRENT_BRANCH" = "dev" ] || error "Phải đứng ở branch 'dev' để release (hiện tại: $CURRENT_BRANCH)"
+
+# ── Kiểm tra file chưa commit ────────────────────────────────────────────────
 if [ -n "$(git status --porcelain | grep -v '^?? release/')" ]; then
   warn "Có file chưa commit:"
   git status --short | grep -v '^?? release/'
@@ -64,6 +69,7 @@ read -r -p "Release notes (mô tả thay đổi): " NOTES
 
 echo ""
 echo -e "${BOLD}Sắp thực hiện:${RESET}"
+echo -e "  Branch  : ${CYAN}dev${RESET} → merge → ${GREEN}main${RESET}"
 echo -e "  Version : ${CYAN}v${CURRENT}${RESET} → ${GREEN}v${NEW_VERSION}${RESET}"
 echo -e "  Notes   : ${NOTES}"
 echo ""
@@ -73,7 +79,7 @@ read -r -p "Xác nhận? (y/N) " confirm
 echo ""
 
 # ── Bước 1: Bump version ─────────────────────────────────────────────────────
-info "Bước 1/5 — Cập nhật version trong package.json..."
+info "Bước 1/6 — Cập nhật version trong package.json..."
 node -e "
   const fs = require('fs');
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -83,15 +89,14 @@ node -e "
 success "Version đã cập nhật → v${NEW_VERSION}"
 
 # ── Bước 2: Kiểm tra TypeScript ──────────────────────────────────────────────
-info "Bước 2/5 — Kiểm tra TypeScript..."
+info "Bước 2/6 — Kiểm tra TypeScript..."
 npx tsc --noEmit || error "Lỗi TypeScript — sửa trước khi release"
 success "TypeScript không có lỗi"
 
 # ── Bước 3: Build ────────────────────────────────────────────────────────────
-info "Bước 3/5 — Build file phân phối..."
+info "Bước 3/6 — Build file phân phối..."
 npm run dist 2>&1 | grep -E '^\s+•|error|Error' || true
 
-# Kiểm tra file bắt buộc
 DMG="release/MPets Plus-${NEW_VERSION}-arm64.dmg"
 ZIP="release/MPets Plus-${NEW_VERSION}-arm64-mac.zip"
 YML="release/latest-mac.yml"
@@ -101,22 +106,33 @@ YML="release/latest-mac.yml"
 [ -f "$YML" ] || error "Không tìm thấy: $YML"
 success "Build thành công"
 
-# ── Bước 4: Commit và push ───────────────────────────────────────────────────
-info "Bước 4/5 — Commit và push lên GitHub..."
+# ── Bước 4: Commit lên dev ───────────────────────────────────────────────────
+info "Bước 4/6 — Commit và push lên dev..."
 git add package.json package-lock.json
 git commit -m "release: v${NEW_VERSION} — ${NOTES}"
-git push
-success "Đã push lên GitHub"
+git push origin dev
+success "Đã push lên dev"
 
-# ── Bước 5: Tạo GitHub Release ───────────────────────────────────────────────
-info "Bước 5/5 — Tạo GitHub Release..."
+# ── Bước 5: Merge dev → main ─────────────────────────────────────────────────
+info "Bước 5/6 — Merge dev vào main..."
+git checkout main
+git pull origin main
+git merge dev --no-ff -m "merge: release v${NEW_VERSION} from dev"
+git push origin main
+git checkout dev
+success "Đã merge vào main"
+
+# ── Bước 6: Tạo GitHub Release ───────────────────────────────────────────────
+info "Bước 6/6 — Tạo GitHub Release..."
 gh release create "v${NEW_VERSION}" \
   "$DMG" \
   "$ZIP" \
   "$YML" \
   --title "v${NEW_VERSION}" \
-  --notes "$NOTES"
+  --notes "$NOTES" \
+  --target main
 
 echo ""
 echo -e "${GREEN}${BOLD}🎉 Release v${NEW_VERSION} hoàn thành!${RESET}"
+echo -e "Branch dev đã được merge vào main."
 echo -e "Người dùng sẽ tự động nhận được cập nhật khi mở app."
