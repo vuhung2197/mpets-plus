@@ -52,7 +52,14 @@ interface PetAPI {
   };
 }
 
-declare const petAPI: PetAPI;
+interface SessionRecord { ts: number; phase: string; minutes: number; }
+interface HistoryAPI {
+  get(): Promise<SessionRecord[]>;
+  clear(): Promise<{ ok: boolean }>;
+  onNewSession(cb: () => void): void;
+}
+
+declare const petAPI: PetAPI & { history: HistoryAPI };
 const api = petAPI;
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -255,6 +262,132 @@ $("saveDurations").addEventListener("click", async () => {
 });
 
 refreshKeyStatus();
+
+// --- History ---------------------------------------------------------------
+const PHASE_NAMES: Record<string, string> = {
+  focus: "Tập trung",
+  shortBreak: "Nghỉ ngắn",
+  longBreak: "Nghỉ dài",
+};
+
+function dayKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function todayKey(): string {
+  return dayKey(Date.now());
+}
+
+function renderHistory(records: SessionRecord[]): void {
+  const focusRecords = records.filter(r => r.phase === "focus");
+
+  // Stats
+  const todayFocus = focusRecords.filter(r => dayKey(r.ts) === todayKey());
+  ($("statFocusToday") as HTMLElement).textContent = String(todayFocus.length);
+  ($("statMinutesToday") as HTMLElement).textContent = String(
+    todayFocus.reduce((s, r) => s + r.minutes, 0)
+  );
+
+  // Streak: consecutive days with ≥1 focus session ending today or yesterday
+  const focusDays = new Set(focusRecords.map(r => dayKey(r.ts)));
+  let streak = 0;
+  const now = new Date();
+  // start from today; if no session today, start from yesterday
+  const startOffset = focusDays.has(todayKey()) ? 0 : 1;
+  for (let i = startOffset; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    if (focusDays.has(dayKey(d.getTime()))) streak++;
+    else break;
+  }
+  ($("statStreak") as HTMLElement).textContent = String(streak);
+
+  // Heatmap: 35 days, row-major Sun→Sat, oldest first (top-left)
+  const heatmap = $("heatmap");
+  heatmap.innerHTML = "";
+  // count focus sessions per day
+  const dayCounts: Record<string, number> = {};
+  focusRecords.forEach(r => {
+    const k = dayKey(r.ts);
+    dayCounts[k] = (dayCounts[k] ?? 0) + 1;
+  });
+
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const k = dayKey(d.getTime());
+    const count = dayCounts[k] ?? 0;
+    const level = count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : 3;
+    const cell = document.createElement("div");
+    cell.className = "heatmap-cell" + (i === 0 ? " today" : "");
+    cell.dataset.level = String(level);
+    const dateStr = d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" });
+    cell.title = `${dateStr}: ${count} phiên focus`;
+    heatmap.appendChild(cell);
+  }
+
+  // Today's session list (all phases, newest first)
+  const list = $("sessionList");
+  list.innerHTML = "";
+  const todayAll = records
+    .filter(r => dayKey(r.ts) === todayKey())
+    .slice()
+    .reverse();
+
+  if (todayAll.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "Chưa có phiên nào hôm nay — bắt đầu tập trung thôi! 🍅";
+    list.appendChild(empty);
+  } else {
+    todayAll.forEach(r => {
+      const item = document.createElement("div");
+      item.className = "session-item";
+
+      const dot = document.createElement("div");
+      dot.className = `session-dot ${r.phase}`;
+
+      const timeEl = document.createElement("span");
+      timeEl.className = "session-time";
+      const d = new Date(r.ts);
+      timeEl.textContent = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+      const phaseEl = document.createElement("span");
+      phaseEl.className = "session-phase";
+      phaseEl.textContent = PHASE_NAMES[r.phase] ?? r.phase;
+
+      const durEl = document.createElement("span");
+      durEl.className = "session-duration";
+      durEl.textContent = `${r.minutes} phút`;
+
+      item.append(dot, timeEl, phaseEl, durEl);
+      list.appendChild(item);
+    });
+  }
+}
+
+async function loadHistory(): Promise<void> {
+  const records = await api.history.get();
+  renderHistory(records);
+}
+
+// Reload when a new session completes
+api.history.onNewSession(loadHistory);
+
+// Load when switching to history tab
+document.querySelectorAll<HTMLButtonElement>(".tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    if (tab.dataset.tab === "history") loadHistory();
+  });
+});
+
+$("clearHistory").addEventListener("click", async () => {
+  await api.history.clear();
+  loadHistory();
+});
+
+loadHistory();
 
 // --- Quit ------------------------------------------------------------------
 // Use mousedown so the IPC fires before the blur→hide sequence on macOS.

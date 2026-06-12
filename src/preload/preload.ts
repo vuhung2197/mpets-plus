@@ -44,6 +44,14 @@ const api = {
   app: {
     quit: (): void => ipcRenderer.send("app:quit"),
   },
+  history: {
+    get: (): Promise<Array<{ ts: number; phase: string; minutes: number }>> =>
+      ipcRenderer.invoke("history:get"),
+    clear: (): Promise<{ ok: boolean }> => ipcRenderer.invoke("history:clear"),
+    onNewSession: (cb: () => void): void => {
+      ipcRenderer.on("history:newSession", () => cb());
+    },
+  },
   settings: {
     getStatus: (): Promise<{ hasKey: boolean }> =>
       ipcRenderer.invoke("settings:getStatus"),

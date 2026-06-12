@@ -14,6 +14,7 @@ import {
   getPomoDurations, setPomoDurations,
   getShowPetBackground, setShowPetBackground,
 } from "./settings";
+import { addSession, getSessions, clearSessions } from "./history";
 
 // dist/main -> project root -> assets
 const ASSETS_DIR = path.join(__dirname, "..", "..", "assets");
@@ -205,6 +206,8 @@ function registerIpc(): void {
       { label: CONTEXT_MENU.quit, click: () => app.quit() },
     ]).popup({ window: win ?? undefined });
   });
+  ipcMain.handle("history:get", () => getSessions());
+  ipcMain.handle("history:clear", () => { clearSessions(); return { ok: true }; });
   ipcMain.handle("chat:reset", () => resetConversation());
   ipcMain.on("chat:send", async (event, text: string) => {
     const sender = event.sender;
@@ -276,6 +279,13 @@ app.whenReady().then(() => {
   pomodoro.on("phase-complete", (finished: string) => {
     const body = finished === "focus" ? NOTIFICATIONS.focusDone : NOTIFICATIONS.breakDone;
     new Notification({ title: PET_NAME, body }).show();
+    // Record the completed session
+    const durations = pomodoro.getDurations();
+    const minutes = finished === "focus" ? durations.focus
+      : finished === "shortBreak" ? durations.shortBreak
+      : durations.longBreak;
+    addSession(finished as "focus" | "shortBreak" | "longBreak", minutes);
+    win?.webContents.send("history:newSession");
     // Celebrate a finished focus session, then settle back into the next mood.
     if (finished === "focus") playReaction("celebrate", 5000);
   });
