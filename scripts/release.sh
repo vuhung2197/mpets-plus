@@ -94,17 +94,21 @@ npx tsc --noEmit || error "Lỗi TypeScript — sửa trước khi release"
 success "TypeScript không có lỗi"
 
 # ── Bước 3: Build ────────────────────────────────────────────────────────────
-info "Bước 3/6 — Build file phân phối..."
-npm run dist 2>&1 | grep -E '^\s+•|error|Error' || true
+info "Bước 3/6 — Build file phân phối (macOS + Windows)..."
+npm run build && electron-builder --mac --win --publish never 2>&1 | grep -E '^\s+•|error|Error' || true
 
 DMG="release/MPets Plus-${NEW_VERSION}-arm64.dmg"
 ZIP="release/MPets Plus-${NEW_VERSION}-arm64-mac.zip"
 YML="release/latest-mac.yml"
+EXE="release/MPets Plus Setup ${NEW_VERSION}.exe"
+WIN_YML="release/latest.yml"
 
-[ -f "$DMG" ] || error "Không tìm thấy: $DMG"
-[ -f "$ZIP" ] || error "Không tìm thấy: $ZIP"
-[ -f "$YML" ] || error "Không tìm thấy: $YML"
-success "Build thành công"
+[ -f "$DMG" ]     || error "Không tìm thấy: $DMG"
+[ -f "$ZIP" ]     || error "Không tìm thấy: $ZIP"
+[ -f "$YML" ]     || error "Không tìm thấy: $YML"
+[ -f "$EXE" ]     || error "Không tìm thấy: $EXE"
+[ -f "$WIN_YML" ] || error "Không tìm thấy: $WIN_YML"
+success "Build thành công (macOS + Windows)"
 
 # ── Bước 4: Commit lên dev ───────────────────────────────────────────────────
 info "Bước 4/6 — Commit và push lên dev..."
@@ -128,6 +132,8 @@ gh release create "v${NEW_VERSION}" \
   "$DMG" \
   "$ZIP" \
   "$YML" \
+  "$EXE" \
+  "$WIN_YML" \
   --title "v${NEW_VERSION}" \
   --notes "$NOTES" \
   --target main
