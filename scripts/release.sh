@@ -72,6 +72,7 @@ echo -e "${BOLD}Sắp thực hiện:${RESET}"
 echo -e "  Branch  : ${CYAN}dev${RESET} → merge → ${GREEN}main${RESET}"
 echo -e "  Version : ${CYAN}v${CURRENT}${RESET} → ${GREEN}v${NEW_VERSION}${RESET}"
 echo -e "  Notes   : ${NOTES}"
+echo -e "  Build   : ${YELLOW}GitHub Actions sẽ build macOS + Windows${RESET}"
 echo ""
 read -r -p "Xác nhận? (y/N) " confirm
 [[ "$confirm" =~ ^[Yy]$ ]] || exit 0
@@ -79,7 +80,7 @@ read -r -p "Xác nhận? (y/N) " confirm
 echo ""
 
 # ── Bước 1: Bump version ─────────────────────────────────────────────────────
-info "Bước 1/6 — Cập nhật version trong package.json..."
+info "Bước 1/4 — Cập nhật version trong package.json..."
 node -e "
   const fs = require('fs');
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -89,36 +90,18 @@ node -e "
 success "Version đã cập nhật → v${NEW_VERSION}"
 
 # ── Bước 2: Kiểm tra TypeScript ──────────────────────────────────────────────
-info "Bước 2/6 — Kiểm tra TypeScript..."
+info "Bước 2/4 — Kiểm tra TypeScript..."
 npx tsc --noEmit || error "Lỗi TypeScript — sửa trước khi release"
 success "TypeScript không có lỗi"
 
-# ── Bước 3: Build ────────────────────────────────────────────────────────────
-info "Bước 3/6 — Build file phân phối (macOS + Windows)..."
-npm run build && electron-builder --mac --win --publish never 2>&1 | grep -E '^\s+•|error|Error' || true
-
-DMG="release/MPetsPlusMac-${NEW_VERSION}-arm64.dmg"
-ZIP="release/MPetsPlusMac-${NEW_VERSION}-arm64.zip"
-YML="release/latest-mac.yml"
-EXE="release/MPetsPlusSetup-${NEW_VERSION}.exe"
-WIN_YML="release/latest.yml"
-
-[ -f "$DMG" ]     || error "Không tìm thấy: $DMG"
-[ -f "$ZIP" ]     || error "Không tìm thấy: $ZIP"
-[ -f "$YML" ]     || error "Không tìm thấy: $YML"
-[ -f "$EXE" ]     || error "Không tìm thấy: $EXE"
-[ -f "$WIN_YML" ] || error "Không tìm thấy: $WIN_YML"
-success "Build thành công (macOS + Windows)"
-
-# ── Bước 4: Commit lên dev ───────────────────────────────────────────────────
-info "Bước 4/6 — Commit và push lên dev..."
+# ── Bước 3: Commit lên dev và merge vào main ─────────────────────────────────
+info "Bước 3/4 — Commit và push lên dev..."
 git add package.json package-lock.json
 git commit -m "release: v${NEW_VERSION} — ${NOTES}"
 git push origin dev
 success "Đã push lên dev"
 
-# ── Bước 5: Merge dev → main ─────────────────────────────────────────────────
-info "Bước 5/6 — Merge dev vào main..."
+info "Merge dev vào main..."
 git checkout main
 git pull origin main
 git merge dev --no-ff -m "merge: release v${NEW_VERSION} from dev"
@@ -126,19 +109,14 @@ git push origin main
 git checkout dev
 success "Đã merge vào main"
 
-# ── Bước 6: Tạo GitHub Release ───────────────────────────────────────────────
-info "Bước 6/6 — Tạo GitHub Release..."
-gh release create "v${NEW_VERSION}" \
-  "$DMG" \
-  "$ZIP" \
-  "$YML" \
-  "$EXE" \
-  "$WIN_YML" \
-  --title "v${NEW_VERSION}" \
-  --notes "$NOTES" \
-  --target main
+# ── Bước 4: Tạo tag → kích hoạt GitHub Actions build ────────────────────────
+info "Bước 4/4 — Tạo tag v${NEW_VERSION} → GitHub Actions sẽ tự build và release..."
+git tag "v${NEW_VERSION}"
+git push origin "v${NEW_VERSION}"
+success "Đã push tag v${NEW_VERSION}"
 
 echo ""
-echo -e "${GREEN}${BOLD}🎉 Release v${NEW_VERSION} hoàn thành!${RESET}"
-echo -e "Branch dev đã được merge vào main."
-echo -e "Người dùng sẽ tự động nhận được cập nhật khi mở app."
+echo -e "${GREEN}${BOLD}🎉 Release v${NEW_VERSION} đã được khởi động!${RESET}"
+echo -e "GitHub Actions đang build macOS + Windows trên máy chủ riêng."
+echo -e "Theo dõi tại: $(gh repo view --json url -q .url)/actions"
+echo -e "File .exe Windows sẽ sạch và không có lỗi NSIS."
