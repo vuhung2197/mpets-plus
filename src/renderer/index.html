@@ -11,6 +11,7 @@
       <span class="title">🐾 Pixel</span>
       <nav class="tabs">
         <button class="tab active" data-tab="timer">Hẹn giờ</button>
+        <button class="tab" data-tab="history">Lịch sử</button>
         <button class="tab" data-tab="chat">Chat</button>
         <button class="tab" data-tab="settings">Cài đặt</button>
       </nav>
@@ -26,6 +27,45 @@
         <button id="reset">Đặt lại</button>
         <button id="skip">Bỏ qua</button>
       </div>
+    </section>
+
+    <!-- History -->
+    <section class="view" data-view="history">
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-value" id="statFocusToday">0</div>
+          <div class="stat-label">phiên hôm nay</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statMinutesToday">0</div>
+          <div class="stat-label">phút tập trung</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statStreak">0</div>
+          <div class="stat-label">ngày liên tiếp</div>
+        </div>
+      </div>
+
+      <div class="heatmap-section">
+        <div class="heatmap-header">
+          <span class="heatmap-title">35 ngày gần nhất</span>
+          <div class="heatmap-legend">
+            <span class="legend-label">ít</span>
+            <div class="legend-cell" data-level="0"></div>
+            <div class="legend-cell" data-level="1"></div>
+            <div class="legend-cell" data-level="2"></div>
+            <div class="legend-cell" data-level="3"></div>
+            <span class="legend-label">nhiều</span>
+          </div>
+        </div>
+        <div class="heatmap" id="heatmap"></div>
+      </div>
+
+      <div class="session-list-header">
+        <span class="field-label" id="sessionListDate">Hôm nay</span>
+        <button id="clearHistory" class="danger-btn">Xóa tất cả</button>
+      </div>
+      <div class="session-list" id="sessionList"></div>
     </section>
 
     <!-- Chat -->
