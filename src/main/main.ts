@@ -1,12 +1,15 @@
-import { app, BrowserWindow, ipcMain, screen, Notification } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, screen, Notification, dialog } from "electron";
 import * as path from "path";
-import { PetState, Skin } from "./tray";
+import { autoUpdater } from "electron-updater";
+import { PetState, Skin, Color } from "./tray";
 import { MenuBarPet } from "./menubar-pet";
 import { Pomodoro, PomodoroState, formatTime } from "./pomodoro";
 import { streamChat, resetConversation, TimerControls } from "./chat";
 import {
   getApiKey, setApiKey, hasApiKey,
   getSkin, setSkin,
+  getColor, setColor,
+  getBgColor, setBgColor,
   getPomoDurations, setPomoDurations,
   getShowPetBackground, setShowPetBackground,
 } from "./settings";
@@ -139,7 +142,7 @@ function pushPomodoroUpdate(state: PomodoroState): void {
     setBaseMood("idle");
     scheduleSleep(); // start the doze countdown while paused/idle
   }
-  menuBarPet?.setTimer(formatTime(state.remaining));
+  menuBarPet?.setTimer(state.running ? formatTime(state.remaining) : "");
   win?.webContents.send("pomodoro:update", state);
 }
 
@@ -169,6 +172,13 @@ function registerIpc(): void {
     return { ok: true };
   });
 
+  ipcMain.handle("settings:getColor", () => getColor());
+  ipcMain.handle("settings:setColor", (_e, color: Color) => {
+    setColor(color);
+    menuBarPet?.setColor(color);
+    return { ok: true };
+  });
+
   ipcMain.handle("settings:getBackground", () => getShowPetBackground());
   ipcMain.handle("settings:setBackground", (_e, show: boolean) => {
     setShowPetBackground(show);
@@ -176,7 +186,25 @@ function registerIpc(): void {
     return { ok: true };
   });
 
-  ipcMain.handle("app:quit", () => app.quit());
+  ipcMain.handle("settings:getBgColor", () => getBgColor());
+  ipcMain.handle("settings:setBgColor", (_e, color: string) => {
+    setBgColor(color);
+    menuBarPet?.setBgColor(color);
+    return { ok: true };
+  });
+
+  // Fire-and-forget: use ipcMain.on so quit isn't blocked waiting for a response
+  // that may never arrive after windows start closing.
+  ipcMain.on("app:quit", () => { app.quit(); });
+
+  // Right-click on the pet strip → context menu with Quit
+  ipcMain.on("pet:context-menu", () => {
+    Menu.buildFromTemplate([
+      { label: "Mở Pixel", click: () => toggleWindow() },
+      { type: "separator" },
+      { label: "Thoát MPets Plus", click: () => app.quit() },
+    ]).popup({ window: win ?? undefined });
+  });
   ipcMain.handle("chat:reset", () => resetConversation());
   ipcMain.on("chat:send", async (event, text: string) => {
     const sender = event.sender;
@@ -192,12 +220,41 @@ function registerIpc(): void {
         win?.webContents.send("pomodoro:durationsChanged", pomodoro.getDurations());
       },
     };
-    await streamChat(text, pomodoro.getState(), controls, {
+    await streamChat(text, pomodoro.getState(), pomodoro.getDurations(), controls, {
       onToken: (t) => sender.send("chat:token", t),
       onDone: () => sender.send("chat:done"),
       onError: (m) => sender.send("chat:error", m),
     });
   });
+}
+
+function setupAutoUpdater(): void {
+  // Chỉ chạy auto-update khi app đã được đóng gói (không phải dev mode)
+  if (!app.isPackaged) return;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("update-available", (info) => {
+    new Notification({
+      title: "MPets Plus có bản cập nhật mới!",
+      body: `Phiên bản ${info.version} đang được tải về...`,
+    }).show();
+  });
+
+  autoUpdater.on("update-downloaded", () => {
+    const response = dialog.showMessageBoxSync({
+      type: "info",
+      title: "Cập nhật sẵn sàng",
+      message: "Đã tải về bản cập nhật mới. Khởi động lại để cài đặt?",
+      buttons: ["Khởi động lại ngay", "Để sau"],
+      defaultId: 0,
+    });
+    if (response === 0) autoUpdater.quitAndInstall();
+  });
+
+  // Kiểm tra update sau 3 giây để app khởi động xong
+  setTimeout(() => autoUpdater.checkForUpdates(), 3000);
 }
 
 app.whenReady().then(() => {
@@ -208,8 +265,11 @@ app.whenReady().then(() => {
 
   registerIpc();
   win = createWindow();
-  menuBarPet = new MenuBarPet(ASSETS_DIR, getSkin(), toggleWindow);
+  menuBarPet = new MenuBarPet(ASSETS_DIR, getSkin(), getColor(), toggleWindow);
   menuBarPet.setBackground(getShowPetBackground());
+  menuBarPet.setBgColor(getBgColor());
+
+  setupAutoUpdater();
 
   pomodoro.on("update", pushPomodoroUpdate);
   pomodoro.on("phase-complete", (finished: string) => {

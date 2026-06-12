@@ -1,5 +1,25 @@
+# Dependencies
 node_modules/
+
+# TypeScript build output
 dist/
-.env
+
+# Electron build output
+release/
+
+# Generated pet assets (tạo bằng npm run generate-assets)
+assets/
+
+# Logs
 *.log
+npm-debug.log*
+
+# Environment
+.env
+
+# macOS
 .DS_Store
+
+# Editor
+.vscode/
+.idea/

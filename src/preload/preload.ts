@@ -42,7 +42,7 @@ const api = {
     },
   },
   app: {
-    quit: (): Promise<void> => ipcRenderer.invoke("app:quit"),
+    quit: (): void => ipcRenderer.send("app:quit"),
   },
   settings: {
     getStatus: (): Promise<{ hasKey: boolean }> =>
@@ -52,10 +52,16 @@ const api = {
     getSkin: (): Promise<string> => ipcRenderer.invoke("settings:getSkin"),
     setSkin: (skin: string): Promise<{ ok: boolean }> =>
       ipcRenderer.invoke("settings:setSkin", skin),
+    getColor: (): Promise<string> => ipcRenderer.invoke("settings:getColor"),
+    setColor: (color: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke("settings:setColor", color),
     getBackground: (): Promise<boolean> =>
       ipcRenderer.invoke("settings:getBackground"),
     setBackground: (show: boolean): Promise<{ ok: boolean }> =>
       ipcRenderer.invoke("settings:setBackground", show),
+    getBgColor: (): Promise<string> => ipcRenderer.invoke("settings:getBgColor"),
+    setBgColor: (color: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke("settings:setBgColor", color),
   },
 };
 

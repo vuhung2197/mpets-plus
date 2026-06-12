@@ -1,66 +1,84 @@
-# Mac Pet Plus
+# MPets Plus
 
-Thú cưng pixel sống trong thanh menu macOS — giống Mac Pet nhưng có nhiều tính năng hơn.
+Thú cưng pixel-art dễ thương sống trên thanh menu macOS — cùng với hẹn giờ Pomodoro và chat AI.
 
-- 🐾 **Thú cưng di chuyển trên thanh menu** — nhân vật pixel-art hoạt hình di chuyển qua lại trong vùng 200px ở trung tâm màn hình (ngay dưới notch nếu có), hiển thị thời gian đếm ngược Pomodoro ngay trong strip.
-- 🍅 **Hẹn giờ Pomodoro** — 25 phút tập trung / 5 phút nghỉ ngắn / 15 phút nghỉ dài, nghỉ dài sau mỗi 4 phiên tập trung. Thông báo khi chuyển giai đoạn.
-- 💬 **Chat với thú cưng** — nói chuyện với Pixel, hỗ trợ bởi OpenAI API (`gpt-4o-mini`, streaming). Có thể ra lệnh hẹn giờ bằng ngôn ngữ tự nhiên.
-- 🎭 **Cảm xúc** — thú cưng có 5 trạng thái: nghỉ ngơi, tập trung (khi đang đếm giờ làm việc), thư giãn (khi nghỉ), **ăn mừng** (sau khi hoàn thành một phiên tập trung, ~5 giây), và **buồn ngủ** (ngủ gật sau 5 phút không có hẹn giờ; thức dậy khi mở popup).
-- 🎨 **Giao diện** — chọn giữa **Mèo**, **Blob**, và **Ma** trong tab Cài đặt.
-- 🖥️ **Đa màn hình** — tự động tạo strip thú cưng trên mỗi màn hình đang kết nối.
+![Platform](https://img.shields.io/badge/macOS-12%2B-blue) ![Platform](https://img.shields.io/badge/Windows-10%2F11-blue)
 
-## Công nghệ
+---
 
-Electron + TypeScript. Không dùng bundler — `tsc` biên dịch ra `dist/`, một script nhỏ copy HTML/CSS của renderer.
+## Tải về
 
-## Cấu trúc dự án
+👉 **[Tải bản mới nhất](../../releases/latest)**
 
+| Hệ điều hành | File cần tải |
+|---|---|
+| macOS (Apple Silicon / Intel) | `MPets.Plus-x.x.x-arm64.dmg` |
+| Windows 10/11 | `MPets.Plus.Setup.x.x.x.exe` |
+
+---
+
+## Cài đặt trên macOS
+
+**1.** Mở file `.dmg` vừa tải → kéo **MPets Plus** vào thư mục **Applications**
+
+**2.** Lần đầu mở app, macOS có thể hiện thông báo chặn. Làm một trong hai cách:
+
+- Mở **System Settings → Privacy & Security** → kéo xuống → bấm **Open Anyway**
+- Hoặc: right-click vào app trong Finder → **Open** → **Open**
+
+> Chỉ cần làm bước này một lần.
+
+**3.** Thú cưng xuất hiện trên thanh menu — **click vào để mở**.
+
+---
+
+## Cài đặt trên Windows
+
+**1.** Chạy file `.exe` vừa tải
+
+**2.** Nếu Windows SmartScreen hiện cảnh báo → bấm **More info → Run anyway**
+
+**3.** Thú cưng xuất hiện ở trên cùng màn hình — **click vào để mở**
+
+---
+
+## Tính năng
+
+**🐾 Thú cưng trên thanh menu**
+Di chuyển qua lại, thay đổi cảm xúc theo trạng thái làm việc. Có 3 hình dáng (Mèo / Blob / Ma) và 5 màu sắc để chọn.
+
+**🍅 Hẹn giờ Pomodoro**
+25 phút tập trung → nghỉ ngắn → nghỉ dài. Thời gian tuỳ chỉnh được. Thông báo khi chuyển giai đoạn.
+
+**💬 Chat với Pixel**
+Nói chuyện hoặc ra lệnh bằng ngôn ngữ tự nhiên: *"bắt đầu hẹn giờ"*, *"đặt 30 phút tập trung"*, *"dừng lại"*. Cần OpenAI API key.
+
+---
+
+## Thiết lập chat (OpenAI API key)
+
+1. Mở popup → tab **Cài đặt**
+2. Dán API key vào ô **OpenAI API key** → bấm **Lưu key**
+
+Key được lưu trên máy, không gửi đi đâu ngoài OpenAI.
+
+> Chưa có key? Tạo tại [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+
+---
+
+## Cập nhật
+
+App tự động kiểm tra bản mới khi khởi động. Khi có cập nhật:
+- Thông báo xuất hiện → app tải về tự động
+- Hỏi *"Khởi động lại để cài đặt?"* → bấm **Khởi động lại ngay**
+
+---
+
+## Gỡ cài đặt
+
+**macOS:** Kéo MPets Plus từ Applications vào Trash. Để xoá sạch dữ liệu:
 ```
-src/
-  main/          Electron main process
-    main.ts        entry point — cửa sổ popup, kết nối IPC
-    menubar-pet.ts thú cưng di chuyển trên thanh menu (một window per màn hình)
-    tray.ts        định nghĩa kiểu PetState, Skin
-    pomodoro.ts    state machine hẹn giờ Pomodoro
-    chat.ts        streaming chat qua OpenAI SDK + function calling
-    settings.ts    lưu cấu hình (userData/config.json)
-  preload/
-    preload.ts     contextBridge — API window.petAPI cho renderer popup
-    pet-preload.ts contextBridge — API window.desktopPet cho strip thú cưng
-  renderer/
-    index.html     giao diện popup (tab Hẹn giờ / Chat / Cài đặt)
-    menubar-pet.html  cửa sổ strip thú cưng (200px, trong suốt)
-    styles.css
-    renderer.ts
-    menubar-pet.ts
-scripts/
-  generate-assets.js  tạo các frame PNG pixel-pet theo skin/trạng thái
-  copy-static.js      copy HTML/CSS vào dist/
-assets/pet/<skin>/    frame ảnh thú cưng (<trạng-thái>-<frame>.png)
+~/Library/Application Support/MPets Plus
 ```
 
-## Cài đặt
-
-```bash
-npm install
-npm run generate-assets   # tạo assets/pet/*.png (chạy một lần)
-npm start                 # biên dịch và khởi động ứng dụng
-```
-
-Thú cưng xuất hiện trên thanh menu (ứng dụng không có icon Dock). **Click** vào thú cưng để mở popup. Dùng nút **Thoát ứng dụng** trong popup để đóng chương trình.
-
-## API Key
-
-Tính năng chat cần OpenAI API key. Có hai cách thiết lập:
-
-- Mở popup → tab **Cài đặt** → dán key vào → Lưu key, hoặc
-- Đặt `OPENAI_API_KEY` trong biến môi trường (xem `.env.example`).
-
-Key được lưu cục bộ trong `userData/config.json` của ứng dụng.
-
-## Lộ trình phát triển
-
-- Giai đoạn 1 ✅ — thú cưng trên menu bar, Pomodoro, chat.
-- Giai đoạn 2 ✅ — cảm xúc thú cưng (ăn mừng / buồn ngủ), chọn giao diện.
-- Giai đoạn 3 ✅ — thời gian Pomodoro tuỳ chỉnh, ra lệnh hẹn giờ qua chat, đa màn hình, background toggle, hiển thị thời gian trong strip.
-- Ý tưởng tương lai: thống kê & lịch sử Pomodoro, cảnh báo âm thanh, thêm giao diện thú cưng.
+**Windows:** Settings → Apps → tìm MPets Plus → Uninstall

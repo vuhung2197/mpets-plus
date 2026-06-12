@@ -11,7 +11,7 @@ const BASE_SYSTEM = [
   "Luôn trả lời bằng ngôn ngữ người dùng đang dùng.",
   "Giữ câu trả lời ngắn (1–4 câu) trừ khi được yêu cầu chi tiết hơn.",
   "Nhẹ nhàng khuyến khích tập trung trong giờ làm, và khuyến khích nghỉ thực sự trong giờ nghỉ.",
-  "Bạn có thể điều khiển hẹn giờ Pomodoro khi người dùng yêu cầu.",
+  "QUAN TRỌNG: Khi người dùng yêu cầu bất kỳ hành động nào liên quan đến hẹn giờ (bắt đầu, dừng, tạm dừng, đặt lại, bỏ qua, thay đổi thời gian), BẮT BUỘC phải gọi tool tương ứng ngay lập tức — không được chỉ mô tả hoặc giải thích mà không gọi tool.",
 ].join(" ");
 
 export interface TimerControls {
@@ -130,6 +130,7 @@ function runTool(
 export async function streamChat(
   userText: string,
   pomodoroState: PomodoroState,
+  pomodoroDurations: { focus: number; shortBreak: number; longBreak: number },
   timerControls: TimerControls,
   cb: ChatCallbacks,
 ): Promise<void> {
@@ -144,7 +145,10 @@ export async function streamChat(
     `\n\nTrạng thái Pomodoro hiện tại: giai đoạn=${pomodoroState.phase}, ` +
     `${pomodoroState.running ? "đang chạy" : "tạm dừng"}, ` +
     `còn ${Math.ceil(pomodoroState.remaining / 60)} phút, ` +
-    `${pomodoroState.completedFocus} phiên tập trung hoàn thành hôm nay.`;
+    `${pomodoroState.completedFocus} phiên tập trung hoàn thành hôm nay. ` +
+    `Thời gian đã cài đặt: tập trung=${pomodoroDurations.focus} phút, ` +
+    `nghỉ ngắn=${pomodoroDurations.shortBreak} phút, ` +
+    `nghỉ dài=${pomodoroDurations.longBreak} phút.`;
 
   const historyStart = history.length;
   history.push({ role: "user", content: userText });
@@ -154,21 +158,22 @@ export async function streamChat(
     ...history,
   ];
 
+  // Accumulated tool calls keyed by index (OpenAI streams them by index)
+  type ToolCallAccum = { id: string; name: string; args: string };
+
   try {
-    // --- First pass: may result in a tool call or direct text ---
+    // --- First pass: may result in tool calls or direct text ---
     const stream1 = await openai.chat.completions.create({
       model: MODEL,
       max_tokens: 512,
       stream: true,
       tools: TOOLS,
+      tool_choice: "auto",
       messages: buildMessages(),
     });
 
     let textReply = "";
-    let toolId = "";
-    let toolName = "";
-    let toolArgs = "";
-    let hasToolCall = false;
+    const toolMap: Record<number, ToolCallAccum> = {};
 
     for await (const chunk of stream1) {
       const choice = chunk.choices[0];
@@ -180,33 +185,34 @@ export async function streamChat(
         cb.onToken(delta.content);
       }
 
-      const tc = delta.tool_calls?.[0];
-      if (tc) {
-        hasToolCall = true;
-        if (tc.id) toolId = tc.id;
-        if (tc.function?.name) toolName = tc.function.name;
-        if (tc.function?.arguments) toolArgs += tc.function.arguments;
+      for (const tc of delta.tool_calls ?? []) {
+        if (!toolMap[tc.index]) toolMap[tc.index] = { id: "", name: "", args: "" };
+        const acc = toolMap[tc.index];
+        if (tc.id) acc.id = tc.id;
+        if (tc.function?.name) acc.name = tc.function.name;
+        if (tc.function?.arguments) acc.args += tc.function.arguments;
       }
     }
 
-    if (hasToolCall && toolName) {
-      // Execute the tool
-      const toolResult = runTool(toolName, toolArgs, timerControls);
+    const toolCalls = Object.values(toolMap).filter(t => t.name);
 
-      // Build the assistant tool-call message
+    if (toolCalls.length > 0) {
+      // Execute every tool in order and collect results
       const assistantMsg: Message = {
         role: "assistant",
         content: textReply || null,
-        tool_calls: [
-          {
-            id: toolId,
-            type: "function",
-            function: { name: toolName, arguments: toolArgs },
-          },
-        ],
+        tool_calls: toolCalls.map(t => ({
+          id: t.id,
+          type: "function" as const,
+          function: { name: t.name, arguments: t.args },
+        })),
       };
       history.push(assistantMsg);
-      history.push({ role: "tool", tool_call_id: toolId, content: toolResult });
+
+      for (const t of toolCalls) {
+        const result = runTool(t.name, t.args, timerControls);
+        history.push({ role: "tool", tool_call_id: t.id, content: result });
+      }
 
       // --- Second pass: stream the conversational follow-up ---
       const stream2 = await openai.chat.completions.create({

@@ -4,6 +4,9 @@ export type PetState = "idle" | "work" | "break" | "celebrate" | "sleepy";
 export const SKINS = ["cat", "blob", "ghost"] as const;
 export type Skin = (typeof SKINS)[number];
 
+export const COLORS = ["default", "pink", "purple", "mint", "dark"] as const;
+export type Color = (typeof COLORS)[number];
+
 function makeDotIcon(): Electron.NativeImage {
   // 32x32 buffer at scaleFactor 2 → logical 16x16, soft white circle (template)
   const S = 32;

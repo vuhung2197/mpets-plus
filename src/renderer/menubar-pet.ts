@@ -5,9 +5,10 @@ interface Motion { facing: "left" | "right"; walking: boolean; x: number; }
 interface DesktopPetAPI {
   onSprite(cb: (sprite: Sprite) => void): void;
   onMotion(cb: (motion: Motion) => void): void;
-  onBackground(cb: (show: boolean) => void): void;
+  onBackground(cb: (data: { show: boolean; color: string }) => void): void;
   onTimer(cb: (text: string) => void): void;
   activate(): void;
+  contextMenu(): void;
 }
 
 declare const desktopPet: DesktopPetAPI;
@@ -77,8 +78,9 @@ desktopPet.onMotion((motion) => {
   applyAnimClass(motion.walking);
 });
 
-desktopPet.onBackground((show) => {
+desktopPet.onBackground(({ show, color }) => {
   bgEl.classList.toggle("visible", show);
+  bgEl.style.background = color;
 });
 
 desktopPet.onTimer((text) => {
@@ -87,3 +89,4 @@ desktopPet.onTimer((text) => {
 });
 
 petEl.addEventListener("click", () => desktopPet.activate());
+petEl.addEventListener("contextmenu", (e) => { e.preventDefault(); desktopPet.contextMenu(); });

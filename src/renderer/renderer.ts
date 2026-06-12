@@ -29,15 +29,19 @@ interface PetAPI {
     onError(cb: (message: string) => void): void;
   };
   app: {
-    quit(): Promise<void>;
+    quit(): void;
   };
   settings: {
     getStatus(): Promise<{ hasKey: boolean }>;
     setKey(key: string): Promise<{ ok: boolean }>;
     getSkin(): Promise<string>;
     setSkin(skin: string): Promise<{ ok: boolean }>;
+    getColor(): Promise<string>;
+    setColor(color: string): Promise<{ ok: boolean }>;
     getBackground(): Promise<boolean>;
     setBackground(show: boolean): Promise<{ ok: boolean }>;
+    getBgColor(): Promise<string>;
+    setBgColor(color: string): Promise<{ ok: boolean }>;
   };
 }
 
@@ -179,10 +183,49 @@ const skinSelect = $("skin") as HTMLSelectElement;
 api.settings.getSkin().then((skin) => { skinSelect.value = skin; });
 skinSelect.addEventListener("change", () => api.settings.setSkin(skinSelect.value));
 
+// Color swatches
+const swatches = document.querySelectorAll<HTMLButtonElement>("#colorSwatches .swatch");
+
+function setActiveColor(color: string): void {
+  swatches.forEach(s => s.classList.toggle("active", s.dataset.color === color));
+}
+
+api.settings.getColor().then(setActiveColor);
+
+swatches.forEach(swatch => {
+  swatch.addEventListener("click", () => {
+    const color = swatch.dataset.color!;
+    api.settings.setColor(color);
+    setActiveColor(color);
+  });
+});
+
 // Pet background toggle
 const petBgToggle = $("petBackground") as HTMLInputElement;
 api.settings.getBackground().then((show) => { petBgToggle.checked = show; });
 petBgToggle.addEventListener("change", () => api.settings.setBackground(petBgToggle.checked));
+
+// Background color swatches
+const bgSwatches = document.querySelectorAll<HTMLButtonElement>("#bgColorSwatches .swatch");
+
+function setActiveBgColor(color: string): void {
+  bgSwatches.forEach(s => s.classList.toggle("active", s.dataset.bg === color));
+}
+
+api.settings.getBgColor().then(setActiveBgColor);
+
+bgSwatches.forEach(swatch => {
+  swatch.addEventListener("click", () => {
+    const color = swatch.dataset.bg!;
+    api.settings.setBgColor(color);
+    setActiveBgColor(color);
+    // Bật background nếu đang tắt
+    if (!petBgToggle.checked) {
+      petBgToggle.checked = true;
+      api.settings.setBackground(true);
+    }
+  });
+});
 
 // Duration inputs
 const durationFocus = $("durationFocus") as HTMLInputElement;
@@ -215,4 +258,3 @@ refreshKeyStatus();
 
 // --- Quit ------------------------------------------------------------------
 // Use mousedown so the IPC fires before the blur→hide sequence on macOS.
-$("quitApp").addEventListener("mousedown", () => api.app.quit());
