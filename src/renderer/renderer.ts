@@ -1,4 +1,11 @@
 // Renderer logic. Talks to the main process only through window.petAPI.
+// Constants inlined here because the renderer runs in Chromium (no CommonJS require).
+const PHASE_LABELS = { focus: "Tập trung", shortBreak: "Nghỉ ngắn", longBreak: "Nghỉ dài" } as const;
+const TIMER_ACTIONS = { start: "Bắt đầu", pause: "Tạm dừng" } as const;
+const SETTINGS_LABELS = {
+  keySet:     "✅ Đã cấu hình key.",
+  keyMissing: "Chưa có key — Pixel chưa thể chat cho đến khi bạn thêm vào.",
+} as const;
 type PomodoroPhase = "focus" | "shortBreak" | "longBreak";
 interface PomodoroState {
   phase: PomodoroPhase;
@@ -67,11 +74,6 @@ const clockEl = $("clock");
 const sessionsEl = $("sessions");
 const startPauseBtn = $("startPause") as HTMLButtonElement;
 
-const PHASE_LABELS: Record<PomodoroPhase, string> = {
-  focus: "Tập trung",
-  shortBreak: "Nghỉ ngắn",
-  longBreak: "Nghỉ dài",
-};
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -83,7 +85,7 @@ function renderPomodoro(state: PomodoroState): void {
   phaseEl.textContent = PHASE_LABELS[state.phase];
   clockEl.textContent = formatTime(state.remaining);
   sessionsEl.textContent = `${state.completedFocus} phiên hoàn thành`;
-  startPauseBtn.textContent = state.running ? "Tạm dừng" : "Bắt đầu";
+  startPauseBtn.textContent = state.running ? TIMER_ACTIONS.pause : TIMER_ACTIONS.start;
 }
 
 startPauseBtn.addEventListener("click", async () => {
@@ -164,9 +166,7 @@ const keyStatus = $("keyStatus");
 
 function refreshKeyStatus(): void {
   api.settings.getStatus().then(({ hasKey }) => {
-    keyStatus.textContent = hasKey
-      ? "✅ Đã cấu hình key."
-      : "Chưa có key — Pixel chưa thể chat cho đến khi bạn thêm vào.";
+    keyStatus.textContent = hasKey ? SETTINGS_LABELS.keySet : SETTINGS_LABELS.keyMissing;
   });
 }
 

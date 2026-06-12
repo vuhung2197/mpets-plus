@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getApiKey } from "./settings";
 import type { PomodoroState, PomodoroPhase } from "./pomodoro";
+import { PHASE_LABELS, TIMER_ACTION_RESULTS } from "../shared/constants";
 
 const MODEL = "gpt-4o-mini";
 
@@ -101,25 +102,14 @@ function runTool(
     const args = JSON.parse(argsJson);
     if (name === "control_timer") {
       const action: "start" | "pause" | "reset" | "skip" = args.action;
-      const labels: Record<string, string> = {
-        start: "Đã bắt đầu hẹn giờ.",
-        pause: "Đã tạm dừng hẹn giờ.",
-        reset: "Đã đặt lại hẹn giờ.",
-        skip: "Đã bỏ qua sang giai đoạn tiếp theo.",
-      };
       controls[action]?.();
-      return labels[action] ?? "Thực hiện thành công.";
+      return TIMER_ACTION_RESULTS[action] ?? "Thực hiện thành công.";
     }
     if (name === "set_duration") {
       const phase: PomodoroPhase = args.phase;
       const minutes: number = args.minutes;
       controls.setDuration(phase, minutes);
-      const phaseLabel: Record<string, string> = {
-        focus: "tập trung",
-        shortBreak: "nghỉ ngắn",
-        longBreak: "nghỉ dài",
-      };
-      return `Đã đặt thời gian ${phaseLabel[phase] ?? phase} thành ${minutes} phút.`;
+      return `Đã đặt thời gian ${PHASE_LABELS[phase] ?? phase} thành ${minutes} phút.`;
     }
   } catch {
     // fall through
