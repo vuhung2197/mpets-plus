@@ -1,6 +1,6 @@
 {
   "name": "mac-pet-plus",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A pixel pet that lives in your macOS menu bar — with a Pomodoro timer and an Anthropic-powered chat.",
   "author": "",
   "license": "MIT",
@@ -64,7 +64,9 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "allowElevation": true,
-      "installerLanguages": ["English"],
+      "installerLanguages": [
+        "English"
+      ],
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "deleteAppDataOnUninstall": false,
