@@ -62,10 +62,10 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "allowElevation": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
       "installerLanguages": [
-        "English"
+        "en_US"
       ],
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
