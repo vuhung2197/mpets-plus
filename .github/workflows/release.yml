@@ -14,6 +14,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - run: npm run generate-assets
       - run: npm run build
       - run: npx electron-builder --mac --publish never
       - uses: actions/upload-artifact@v4
@@ -32,6 +33,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - run: npm run generate-assets
       - run: npm run build
       - run: npx electron-builder --win --publish never
       - uses: actions/upload-artifact@v4
