@@ -97,10 +97,10 @@ success "TypeScript không có lỗi"
 info "Bước 3/6 — Build file phân phối (macOS + Windows)..."
 npm run build && electron-builder --mac --win --publish never 2>&1 | grep -E '^\s+•|error|Error' || true
 
-DMG="release/MPets Plus-${NEW_VERSION}-arm64.dmg"
-ZIP="release/MPets Plus-${NEW_VERSION}-arm64-mac.zip"
+DMG="release/MPetsPlusMac-${NEW_VERSION}-arm64.dmg"
+ZIP="release/MPetsPlusMac-${NEW_VERSION}-arm64.zip"
 YML="release/latest-mac.yml"
-EXE="release/MPets Plus Setup ${NEW_VERSION}.exe"
+EXE="release/MPetsPlusSetup-${NEW_VERSION}.exe"
 WIN_YML="release/latest.yml"
 
 [ -f "$DMG" ]     || error "Không tìm thấy: $DMG"

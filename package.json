@@ -29,6 +29,7 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
+      "artifactName": "MPetsPlusMac-${version}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
@@ -48,6 +49,7 @@
       }
     },
     "win": {
+      "artifactName": "MPetsPlusSetup-${version}.${ext}",
       "target": [
         {
           "target": "nsis",

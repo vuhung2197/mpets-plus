@@ -245,6 +245,10 @@ function setupAutoUpdater(): void {
     }).show();
   });
 
+  autoUpdater.on("error", (err) => {
+    console.error("Auto-update error:", err.message);
+  });
+
   autoUpdater.on("update-downloaded", () => {
     const response = dialog.showMessageBoxSync({
       type: "info",
