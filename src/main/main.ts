@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain, Menu, screen, Notification, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, screen, Notification, dialog, powerMonitor } from "electron";
 import * as path from "path";
 import { autoUpdater } from "electron-updater";
 import { PetState, Skin, Color } from "./tray";
+import { APP_NAME, PET_NAME, NOTIFICATIONS, CONTEXT_MENU, UPDATE_DIALOG } from "../shared/constants";
 import { MenuBarPet } from "./menubar-pet";
 import { Pomodoro, PomodoroState, formatTime } from "./pomodoro";
 import { streamChat, resetConversation, TimerControls } from "./chat";
@@ -18,11 +19,12 @@ import {
 const ASSETS_DIR = path.join(__dirname, "..", "..", "assets");
 const WINDOW_WIDTH = 340;
 const WINDOW_HEIGHT = 480;
-const IDLE_SLEEP_MS = 5 * 60 * 1000; // pet dozes off after 5 min of no timer
+const IDLE_SLEEP_SECS = 5 * 60; // pet ngủ sau 5 phút không chạm chuột/bàn phím
+const IDLE_POLL_MS   = 5_000;  // kiểm tra mỗi 5 giây
 
 let menuBarPet: MenuBarPet | null = null;
 let win: BrowserWindow | null = null;
-let idleTimer: NodeJS.Timeout | null = null;
+let idlePoller: NodeJS.Timeout | null = null;
 const pomodoro = new Pomodoro(getPomoDurations());
 
 // --- Mood orchestration: keeps the tray and desktop pet in sync -------------
@@ -49,23 +51,23 @@ function playReaction(state: PetState, durationMs: number): void {
   }, durationMs);
 }
 
-function clearIdleTimer(): void {
-  if (idleTimer) {
-    clearTimeout(idleTimer);
-    idleTimer = null;
-  }
+function startIdlePoller(): void {
+  if (idlePoller) return;
+  idlePoller = setInterval(() => {
+    if (pomodoro.getState().running) return; // Pomodoro đang chạy → bỏ qua
+    const idleSecs = powerMonitor.getSystemIdleTime();
+    if (idleSecs >= IDLE_SLEEP_SECS && baseMood !== "sleepy") {
+      setBaseMood("sleepy");
+    } else if (idleSecs < IDLE_SLEEP_SECS && baseMood === "sleepy") {
+      setBaseMood("idle");
+    }
+  }, IDLE_POLL_MS);
 }
 
-function scheduleSleep(): void {
-  clearIdleTimer();
-  idleTimer = setTimeout(() => setBaseMood("sleepy"), IDLE_SLEEP_MS);
-}
-
-/** Wakes the pet to idle and restarts the doze countdown (on user activity). */
+/** Wakes the pet to idle (gọi khi mở popup). */
 function wake(): void {
   if (!pomodoro.getState().running) {
     setBaseMood("idle");
-    scheduleSleep();
   }
 }
 
@@ -136,11 +138,9 @@ function runningStateFor(state: PomodoroState): PetState {
 
 function pushPomodoroUpdate(state: PomodoroState): void {
   if (state.running) {
-    clearIdleTimer();
     setBaseMood(runningStateFor(state));
   } else {
     setBaseMood("idle");
-    scheduleSleep(); // start the doze countdown while paused/idle
   }
   menuBarPet?.setTimer(state.running ? formatTime(state.remaining) : "");
   win?.webContents.send("pomodoro:update", state);
@@ -200,9 +200,9 @@ function registerIpc(): void {
   // Right-click on the pet strip → context menu with Quit
   ipcMain.on("pet:context-menu", () => {
     Menu.buildFromTemplate([
-      { label: "Mở Pixel", click: () => toggleWindow() },
+      { label: CONTEXT_MENU.open, click: () => toggleWindow() },
       { type: "separator" },
-      { label: "Thoát MPets Plus", click: () => app.quit() },
+      { label: CONTEXT_MENU.quit, click: () => app.quit() },
     ]).popup({ window: win ?? undefined });
   });
   ipcMain.handle("chat:reset", () => resetConversation());
@@ -237,17 +237,17 @@ function setupAutoUpdater(): void {
 
   autoUpdater.on("update-available", (info) => {
     new Notification({
-      title: "MPets Plus có bản cập nhật mới!",
-      body: `Phiên bản ${info.version} đang được tải về...`,
+      title: `${APP_NAME} có bản cập nhật mới!`,
+      body: NOTIFICATIONS.updateAvailable(info.version),
     }).show();
   });
 
   autoUpdater.on("update-downloaded", () => {
     const response = dialog.showMessageBoxSync({
       type: "info",
-      title: "Cập nhật sẵn sàng",
-      message: "Đã tải về bản cập nhật mới. Khởi động lại để cài đặt?",
-      buttons: ["Khởi động lại ngay", "Để sau"],
+      title: UPDATE_DIALOG.title,
+      message: NOTIFICATIONS.updateReady,
+      buttons: [UPDATE_DIALOG.restartNow, UPDATE_DIALOG.later],
       defaultId: 0,
     });
     if (response === 0) autoUpdater.quitAndInstall();
@@ -269,15 +269,13 @@ app.whenReady().then(() => {
   menuBarPet.setBackground(getShowPetBackground());
   menuBarPet.setBgColor(getBgColor());
 
+  startIdlePoller();
   setupAutoUpdater();
 
   pomodoro.on("update", pushPomodoroUpdate);
   pomodoro.on("phase-complete", (finished: string) => {
-    const body =
-      finished === "focus"
-        ? "Xong rồi! Nghỉ ngơi chút nào 🎉"
-        : "Hết giờ nghỉ rồi — vào việc thôi! 💪";
-    new Notification({ title: "Pixel", body }).show();
+    const body = finished === "focus" ? NOTIFICATIONS.focusDone : NOTIFICATIONS.breakDone;
+    new Notification({ title: PET_NAME, body }).show();
     // Celebrate a finished focus session, then settle back into the next mood.
     if (finished === "focus") playReaction("celebrate", 5000);
   });
@@ -291,5 +289,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  if (idlePoller) { clearInterval(idlePoller); idlePoller = null; }
   menuBarPet?.destroy();
 });
