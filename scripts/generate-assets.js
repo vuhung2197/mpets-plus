@@ -126,21 +126,52 @@ const EYE_ROWS = {
   closed: "..KBKBBBBBBKBK..", // a dark line — sleepy / closed eyes
 };
 
-// Per-state mood. f1 is the second animation frame's overrides.
+// Color palettes — each maps state → body RGB.
+const COLOR_PALETTES = {
+  default: {
+    idle:      [244, 162, 97],
+    work:      [80,  160, 220],
+    break:     [60,  180, 140],
+    celebrate: [255, 209, 102],
+    sleepy:    [120, 130, 160],
+  },
+  pink: {
+    idle:      [255, 182, 200],
+    work:      [240, 100, 150],
+    break:     [255, 210, 220],
+    celebrate: [255, 160, 180],
+    sleepy:    [210, 170, 200],
+  },
+  purple: {
+    idle:      [190, 150, 255],
+    work:      [130,  80, 240],
+    break:     [210, 180, 255],
+    celebrate: [230, 210, 255],
+    sleepy:    [150, 130, 190],
+  },
+  mint: {
+    idle:      [140, 220, 190],
+    work:      [60,  190, 140],
+    break:     [190, 240, 220],
+    celebrate: [230, 250, 180],
+    sleepy:    [140, 180, 160],
+  },
+  dark: {
+    idle:      [90,  100, 120],
+    work:      [50,   80, 160],
+    break:     [50,  130, 100],
+    celebrate: [180, 150,  60],
+    sleepy:    [60,   60,  80],
+  },
+};
+
+// Per-state mood config (eyes + animation). Color comes from palette.
 const STATES = {
-  idle: { color: [244, 162, 97], eyes: "open", f1: { eyes: "blink" } },
-  work: { color: [80, 160, 220], eyes: "open", f1: { eyes: "blink" } },
-  break: { color: [60, 180, 140], eyes: "open", f1: { eyes: "blink" } },
-  celebrate: {
-    color: [255, 209, 102],
-    eyes: "open",
-    f1: { eyes: "open", yOffset: 1, sparkle: true },
-  },
-  sleepy: {
-    color: [120, 130, 160],
-    eyes: "closed",
-    f1: { eyes: "closed", zzz: true },
-  },
+  idle:      { eyes: "open",   f1: { eyes: "blink" } },
+  work:      { eyes: "open",   f1: { eyes: "blink" } },
+  break:     { eyes: "open",   f1: { eyes: "blink" } },
+  celebrate: { eyes: "open",   f1: { eyes: "open", yOffset: 1, sparkle: true } },
+  sleepy:    { eyes: "closed", f1: { eyes: "closed", zzz: true } },
 };
 
 const SPARKLE = { color: [255, 240, 150], px: [[1, 3], [14, 3], [2, 1], [13, 1]] };
@@ -200,16 +231,19 @@ const petDir = path.join(__dirname, "..", "assets", "pet");
 let count = 0;
 
 for (const [skin, grid] of Object.entries(SKINS)) {
-  const dir = path.join(petDir, skin);
-  fs.mkdirSync(dir, { recursive: true });
-  for (const [state, cfg] of Object.entries(STATES)) {
-    const f0 = buildFrame(grid, cfg.eyes, cfg.color, {});
-    const f1cfg = cfg.f1 || {};
-    const f1 = buildFrame(grid, f1cfg.eyes || cfg.eyes, cfg.color, f1cfg);
-    fs.writeFileSync(path.join(dir, `${state}-0.png`), f0);
-    fs.writeFileSync(path.join(dir, `${state}-1.png`), f1);
-    count += 2;
+  for (const [palette, colors] of Object.entries(COLOR_PALETTES)) {
+    const dir = path.join(petDir, skin, palette);
+    fs.mkdirSync(dir, { recursive: true });
+    for (const [state, cfg] of Object.entries(STATES)) {
+      const color = colors[state];
+      const f0 = buildFrame(grid, cfg.eyes, color, {});
+      const f1cfg = cfg.f1 || {};
+      const f1 = buildFrame(grid, f1cfg.eyes || cfg.eyes, color, f1cfg);
+      fs.writeFileSync(path.join(dir, `${state}-0.png`), f0);
+      fs.writeFileSync(path.join(dir, `${state}-1.png`), f1);
+      count += 2;
+    }
   }
 }
 
-console.log(`Generated ${count} pet frames across ${Object.keys(SKINS).length} skins in ${petDir}`);
+console.log(`Generated ${count} frames — ${Object.keys(SKINS).length} skins × ${Object.keys(COLOR_PALETTES).length} palettes in ${petDir}`);

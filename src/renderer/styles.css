@@ -249,22 +249,29 @@ select:focus {
   padding: 7px 8px;
 }
 
-.quit-bar {
-  flex-shrink: 0;
-  padding: 8px 16px;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
+.color-swatches {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.quit-bar button {
-  width: 100%;
-  font-size: 12px;
-  color: #e06c75;
-  background: transparent;
-  border-color: transparent;
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--c);
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
 }
 
-.quit-bar button:hover {
-  background: rgba(224, 108, 117, 0.12);
-  border-color: rgba(224, 108, 117, 0.3);
+.swatch:hover {
+  transform: scale(1.15);
+  background: var(--c);
+}
+
+.swatch.active {
+  border-color: var(--text);
+  transform: scale(1.15);
 }

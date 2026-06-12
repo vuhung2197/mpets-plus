@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain, screen } from "electron";
 import * as path from "path";
 import * as fs from "fs";
-import { PetState, Skin } from "./tray";
+import { PetState, Skin, Color } from "./tray";
 
 const WIN_W  = 200;
 const WIN_H  = 40;
@@ -15,6 +15,7 @@ export class MenuBarPet {
   private wins: Map<number, BrowserWindow> = new Map();
 
   private skin: Skin;
+  private color: Color;
   private mood: PetState = "idle";
   private x = (WIN_W - SPRITE) / 2;
   private dir = 1;
@@ -23,6 +24,7 @@ export class MenuBarPet {
   private wanderTimer: NodeJS.Timeout | null = null;
   private syncTimer: NodeJS.Timeout | null = null;
   private showBackground = false;
+  private bgColor = "rgba(0,0,0,0.40)";
   private timerText = "";
   private seed = 12345;
 
@@ -34,9 +36,11 @@ export class MenuBarPet {
   constructor(
     private assetsDir: string,
     skin: Skin,
+    color: Color,
     onActivate: () => void,
   ) {
     this.skin = skin;
+    this.color = color;
 
     ipcMain.removeHandler("menubar-pet:activate");
     ipcMain.handle("menubar-pet:activate", () => onActivate());
@@ -54,6 +58,8 @@ export class MenuBarPet {
   // ── Per-display window management ─────────────────────────────────────────
 
   private calcWindowPos(d: Electron.Display): { wx: number; wy: number } {
+    // macOS: pet sits at the top (under the menu bar via workArea.y)
+    // Windows: workArea.y is 0 when taskbar is at bottom, so top of screen is fine
     return {
       wx: Math.round(d.bounds.x + d.bounds.width / 2 - WIN_W / 2),
       wy: d.workArea.y,
@@ -89,7 +95,10 @@ export class MenuBarPet {
     // "status" level sits just above normal windows but below system UI.
     // "screen-saver" can misbehave on secondary displays on macOS.
     win.setAlwaysOnTop(true, "status");
-    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    // setVisibleOnAllWorkspaces is macOS/Linux only — no-op guard for Windows
+    if (process.platform !== "win32") {
+      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    }
     // Explicitly set position after creation — macOS sometimes ignores
     // constructor x/y for secondary displays.
     win.setPosition(wx, wy, false);
@@ -108,7 +117,7 @@ export class MenuBarPet {
       // Push current app state
       this.sendTo(win, "pet:sprite",     this.buildSprite());
       this.sendTo(win, "pet:motion",     this.buildMotion());
-      this.sendTo(win, "pet:background", this.showBackground);
+      this.sendTo(win, "pet:background", { show: this.showBackground, color: this.bgColor });
       this.sendTo(win, "pet:timer",      this.timerText);
       if (!this.walkTimer && !this.wanderTimer) this.scheduleWander();
     });
@@ -153,7 +162,7 @@ export class MenuBarPet {
   }
 
   private dataUrl(state: PetState, frame: number): string {
-    const file = path.join(this.assetsDir, "pet", this.skin, `${state}-${frame}.png`);
+    const file = path.join(this.assetsDir, "pet", this.skin, this.color, `${state}-${frame}.png`);
     try {
       return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`;
     } catch { return ""; }
@@ -177,7 +186,9 @@ export class MenuBarPet {
 
   private pushSprite():     void { this.broadcast("pet:sprite",     this.buildSprite()); }
   private pushMotion():     void { this.broadcast("pet:motion",     this.buildMotion()); }
-  private pushBackground(): void { this.broadcast("pet:background", this.showBackground); }
+  private pushBackground(): void {
+    this.broadcast("pet:background", { show: this.showBackground, color: this.bgColor });
+  }
   private pushTimer():      void { this.broadcast("pet:timer",      this.timerText); }
 
   // ── Walk loop ─────────────────────────────────────────────────────────────
@@ -237,8 +248,18 @@ export class MenuBarPet {
     this.pushSprite();
   }
 
+  setColor(color: Color): void {
+    this.color = color;
+    this.pushSprite();
+  }
+
   setBackground(show: boolean): void {
     this.showBackground = show;
+    this.pushBackground();
+  }
+
+  setBgColor(color: string): void {
+    this.bgColor = color;
     this.pushBackground();
   }
 

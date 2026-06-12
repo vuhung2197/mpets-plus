@@ -11,14 +11,17 @@ const api = {
   onMotion: (cb: (motion: Motion) => void): void => {
     ipcRenderer.on("pet:motion", (_e, motion) => cb(motion));
   },
-  onBackground: (cb: (show: boolean) => void): void => {
-    ipcRenderer.on("pet:background", (_e, show) => cb(show));
+  onBackground: (cb: (data: { show: boolean; color: string }) => void): void => {
+    ipcRenderer.on("pet:background", (_e, data) => cb(data));
   },
   onTimer: (cb: (text: string) => void): void => {
     ipcRenderer.on("pet:timer", (_e, text) => cb(text));
   },
   activate: (): void => {
     ipcRenderer.invoke("menubar-pet:activate");
+  },
+  contextMenu: (): void => {
+    ipcRenderer.send("pet:context-menu");
   },
 };
 

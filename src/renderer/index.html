@@ -55,13 +55,30 @@
         <input type="checkbox" id="petBackground" />
         <span>Hiện nền sau pet (pill mờ trong notch)</span>
       </label>
+      <div class="color-swatches" id="bgColorSwatches">
+        <button class="swatch" data-bg="rgba(0,0,0,0.40)"         title="Đen"     style="--c:#444"></button>
+        <button class="swatch" data-bg="rgba(255,255,255,0.25)"   title="Trắng"   style="--c:#ddd"></button>
+        <button class="swatch" data-bg="rgba(244,162,97,0.55)"    title="Cam"     style="--c:#f4a261"></button>
+        <button class="swatch" data-bg="rgba(80,160,220,0.55)"    title="Xanh"    style="--c:#50a0dc"></button>
+        <button class="swatch" data-bg="rgba(180,100,220,0.55)"   title="Tím"     style="--c:#b464dc"></button>
+        <button class="swatch" data-bg="rgba(60,180,140,0.55)"    title="Xanh lá" style="--c:#3cb48c"></button>
+      </div>
 
-      <label class="field-label" for="skin">Giao diện thú cưng</label>
+      <label class="field-label" for="skin">Hình dáng thú cưng</label>
       <select id="skin">
         <option value="cat">🐱 Mèo</option>
         <option value="blob">🟠 Blob</option>
         <option value="ghost">👻 Ma</option>
       </select>
+
+      <label class="field-label">Màu sắc thú cưng</label>
+      <div class="color-swatches" id="colorSwatches">
+        <button class="swatch" data-color="default" title="Mặc định" style="--c:#f4a261"></button>
+        <button class="swatch" data-color="pink"    title="Hồng"     style="--c:#ffb6c8"></button>
+        <button class="swatch" data-color="purple"  title="Tím"      style="--c:#be96ff"></button>
+        <button class="swatch" data-color="mint"    title="Xanh lá"  style="--c:#8cdcc0"></button>
+        <button class="swatch" data-color="dark"    title="Tối"      style="--c:#5a6478"></button>
+      </div>
 
       <label class="field-label" for="apiKey">OpenAI API key</label>
       <input id="apiKey" type="password" placeholder="sk-…" autocomplete="off" />
@@ -71,8 +88,5 @@
     </section>
 
     <script src="./renderer.js"></script>
-    <footer class="quit-bar">
-      <button id="quitApp">Thoát ứng dụng</button>
-    </footer>
   </body>
 </html>

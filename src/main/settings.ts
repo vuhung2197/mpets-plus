@@ -1,12 +1,14 @@
 import { app } from "electron";
 import * as fs from "fs";
 import * as path from "path";
-import { SKINS, Skin } from "./tray";
+import { SKINS, Skin, COLORS, Color } from "./tray";
 import { PomoDurations } from "./pomodoro";
 
 interface Config {
   apiKey?: string;
   skin?: string;
+  color?: string;
+  bgColor?: string;
   pomoDurations?: PomoDurations;
   showPetBackground?: boolean;
 }
@@ -46,6 +48,17 @@ export function getSkin(): Skin {
   return SKINS.includes(s as Skin) ? (s as Skin) : "cat";
 }
 
+export function getColor(): Color {
+  const c = read().color;
+  return COLORS.includes(c as Color) ? (c as Color) : "default";
+}
+
+export function setColor(color: Color): void {
+  const c = read();
+  c.color = color;
+  write(c);
+}
+
 export function setSkin(skin: Skin): void {
   const c = read();
   c.skin = skin;
@@ -59,6 +72,16 @@ export function getPomoDurations(): PomoDurations {
 export function setPomoDurations(d: PomoDurations): void {
   const c = read();
   c.pomoDurations = d;
+  write(c);
+}
+
+export function getBgColor(): string {
+  return read().bgColor ?? "rgba(0,0,0,0.40)";
+}
+
+export function setBgColor(color: string): void {
+  const c = read();
+  c.bgColor = color;
   write(c);
 }
 
