@@ -1,8 +1,18 @@
-# MPets Plus
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/branding/banner-dark.png">
+    <img src="assets/branding/banner-light.png" alt="MPets Plus" width="640">
+  </picture>
+</p>
 
-Thú cưng pixel-art dễ thương sống trên thanh menu macOS — cùng với hẹn giờ Pomodoro và chat AI.
+<p align="center">
+  Thú cưng pixel-art dễ thương sống trên thanh menu macOS — cùng với hẹn giờ Pomodoro và chat AI.
+</p>
 
-![Platform](https://img.shields.io/badge/macOS-12%2B-blue) ![Platform](https://img.shields.io/badge/Windows-10%2F11-blue)
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-12%2B-blue" alt="macOS 12+">
+  <img src="https://img.shields.io/badge/Windows-10%2F11-blue" alt="Windows 10/11">
+</p>
 
 ---
 
@@ -43,6 +53,8 @@ Thú cưng pixel-art dễ thương sống trên thanh menu macOS — cùng với
 ---
 
 ## Tính năng
+
+<img src="assets/branding/cat-mascot.png" align="right" width="120" alt="MPets mascot">
 
 **🐾 Thú cưng trên thanh menu**
 Di chuyển qua lại, thay đổi cảm xúc theo trạng thái làm việc. Có 3 hình dáng (Mèo / Blob / Ma) và 5 màu sắc để chọn.
