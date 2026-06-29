@@ -8,7 +8,9 @@ dist/
 release/
 
 # Generated pet assets (tạo bằng npm run generate-assets)
-assets/
+assets/*
+# ...trừ branding (banner/logo/mascot dùng cho README)
+!assets/branding/
 
 # Logs
 *.log
